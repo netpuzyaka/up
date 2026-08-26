@@ -149,6 +149,34 @@
     </div>
   </div>
 
+  <div class="section-title">🔑 Токены</div>
+  <div class="card">
+    <div class="row2">
+      <div>
+        <div class="field">
+          <label>Discord-токены (по одному в строке)</label>
+          <textarea id="tokens"></textarea>
+        </div>
+        <div class="actions">
+          <button class="btn primary" onclick="saveTokens()">💾 Сохранить токены</button>
+          <a class="btn" id="downloadLink" href="#" download="tokens.txt">⬇️ Скачать tokens.txt</a>
+          <label class="btn" style="cursor:pointer">📁 Загрузить файл<input type="file" id="tokenFile" accept=".txt" style="display:none" onchange="uploadTokensFile(this)"></label>
+        </div>
+      </div>
+      <div>
+        <div class="field">
+          <label>GitHub токен (для отправки статистики на сайт)</label>
+          <input class="input" id="githubToken" type="password" placeholder="не задан" autocomplete="off">
+        </div>
+        <div class="stat-line"><span id="githubStatus">—</span></div>
+        <div class="actions">
+          <button class="btn primary" onclick="saveGithubToken()">💾 Сохранить GitHub токен</button>
+        </div>
+        <div class="stat-line" style="margin-top:12px"><span>Файл с токенами (txt, по одному в строке) можно выбрать — он сразу загрузится в бота.</span></div>
+      </div>
+    </div>
+  </div>
+
   <div id="content"></div>
 
   <div class="toast" id="toast"></div>
@@ -252,6 +280,72 @@ async function stopBot() {
   }
 }
 
+async function loadTokens() {
+  document.getElementById('downloadLink').href = LOCAL + '/api/tokens/download';
+  if (!localAvailable) { return; }
+  try {
+    const data = await fetchLocal('/api/tokens');
+    document.getElementById('tokens').value = (data.tokens || []).join('\n');
+  } catch {}
+}
+
+async function loadGithub() {
+  if (!localAvailable) { document.getElementById('githubStatus').textContent = '—'; return; }
+  try {
+    const g = await fetchLocal('/api/github');
+    document.getElementById('githubStatus').textContent = g.set ? ('Задан: ' + g.masked) : 'не задан';
+  } catch {
+    document.getElementById('githubStatus').textContent = '—';
+  }
+}
+
+async function saveTokens() {
+  if (!localAvailable) { toast('Бот не запущен на этом ПК — сохранить нельзя.', false); return; }
+  const tokens = document.getElementById('tokens').value.split('\n').map(s => s.trim()).filter(s => s);
+  try {
+    const resp = await fetch(LOCAL + '/api/tokens', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ tokens })
+    });
+    const res = await resp.json();
+    if (!resp.ok) throw new Error(res.error || ('HTTP ' + resp.status));
+    toast(`✅ Токенов: ${res.total}, добавлено новых: ${res.added}, ошибок: ${res.failedCount}`, true);
+    loadTokens();
+    load();
+  } catch (e) {
+    toast('❌ ' + e.message, false);
+  }
+}
+
+async function uploadTokensFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const text = await file.text();
+  document.getElementById('tokens').value = text;
+  await saveTokens();
+  input.value = '';
+}
+
+async function saveGithubToken() {
+  if (!localAvailable) { toast('Бот не запущен на этом ПК — сохранить нельзя.', false); return; }
+  const token = document.getElementById('githubToken').value.trim();
+  if (!token) { toast('Введите токен.', false); return; }
+  try {
+    const resp = await fetch(LOCAL + '/api/github', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ token })
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    document.getElementById('githubToken').value = '';
+    toast('✅ GitHub токен сохранён.', true);
+    loadGithub();
+  } catch (e) {
+    toast('❌ ' + e.message, false);
+  }
+}
+
 async function load() {
   const el = document.getElementById('content');
   try {
@@ -349,6 +443,8 @@ function render(d) {
 (async function init() {
   await checkLocal();
   await loadSettings();
+  await loadTokens();
+  await loadGithub();
   load();
 })();
 setInterval(checkLocal, 15000);
