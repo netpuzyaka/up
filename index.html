@@ -259,6 +259,17 @@
       </div>
     </div>
 
+    <div class="section-title">🚀 Отправка сообщения</div>
+    <div class="card">
+      <div class="row2">
+        <div>
+          <div class="field"><label>Текст сообщения</label><input class="input" id="sendMessage" type="text" placeholder="up"></div>
+          <div class="field"><label>Канал (ID или ссылка; пусто — во все каналы сразу)</label><input class="input" id="sendChannel" type="text" placeholder="все каналы"></div>
+          <div class="actions"><button class="btn primary" onclick="sendMessage()">🚀 Отправить сейчас</button></div>
+        </div>
+      </div>
+    </div>
+
     <div class="section-title">🔑 Токены</div>
     <div class="card">
       <div class="row2">
@@ -588,6 +599,7 @@ async function loadSettings() {
   document.getElementById('interval').value = (s && s.intervalMinutes) || 720;
   document.getElementById('invite').value = (s && s.invite) || 'AYnkWUBwy';
   document.getElementById('apiUrl').value = (s && s.apiUrl) || '';
+  document.getElementById('sendMessage').value = (s && s.message) || 'up';
   document.getElementById('useBot').value = String(!!(s && s.useBot));
   document.getElementById('settingsNote').textContent = localAvailable
     ? 'Настройки сохраняются в бота напрямую.'
@@ -671,6 +683,29 @@ async function stopBot() {
     await fetch(LOCAL + '/api/stop', { method: 'POST' });
     toast('Бот остановлен.', true);
   } catch (e) { toast('Ошибка: ' + e.message, false); }
+}
+
+async function sendMessage() {
+  if (!localAvailable) { toast('Бот не запущен на этом ПК — отправить нельзя.', false); return; }
+  const payload = {
+    message: document.getElementById('sendMessage').value.trim() || 'up',
+    channel: document.getElementById('sendChannel').value.trim()
+  };
+  try {
+    const resp = await fetch(LOCAL + '/api/send', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    const res = await resp.json();
+    if (!resp.ok) throw new Error(res.error || ('HTTP ' + resp.status));
+    const results = res.results || [];
+    const okCount = results.filter(r => r.ok).length;
+    toast(`✅ Отправлено: ${okCount} из ${results.length}.`, true);
+    load();
+  } catch (e) {
+    toast('❌ ' + e.message, false);
+  }
 }
 
 (async function init() {
