@@ -242,6 +242,7 @@
           <div class="field"><label>Текст сообщения</label><input class="input" id="message" type="text" placeholder="up"></div>
           <div class="field"><label>Интервал между отправками (минут)</label><input class="input" id="interval" type="number" min="1" max="10080" placeholder="720"></div>
           <div class="field"><label>Код инвайта (без discord.gg/)</label><input class="input" id="invite" type="text" placeholder="AYnkWUBwy"></div>
+          <div class="field"><label>Адрес API сайта (например https://up-xxx.vercel.app)</label><input class="input" id="apiUrl" type="text" placeholder="https://up-xxx.vercel.app"></div>
           <div class="field">
             <label>Тип токена</label>
             <select class="input" id="useBot">
@@ -387,6 +388,12 @@ function pieHTML(channels) {
 /* ---------- data loading ---------- */
 async function load() {
   const el = document.getElementById('content');
+  try {
+    const data = await fetchJson('/api/stats');
+    const clients = (data.clients || []).map(c => ({ id: c.id, name: c.name, lastSeen: c.lastSeen, stats: c.stats }));
+    render(clients);
+    return;
+  } catch (e) { /* fallback to GitHub raw */ }
   try {
     let registry = {};
     try { registry = (await fetchJson(CLIENTS_URL)).clients || {}; } catch {}
@@ -580,6 +587,7 @@ async function loadSettings() {
   document.getElementById('message').value = (s && s.message) || 'up';
   document.getElementById('interval').value = (s && s.intervalMinutes) || 720;
   document.getElementById('invite').value = (s && s.invite) || 'AYnkWUBwy';
+  document.getElementById('apiUrl').value = (s && s.apiUrl) || '';
   document.getElementById('useBot').value = String(!!(s && s.useBot));
   document.getElementById('settingsNote').textContent = localAvailable
     ? 'Настройки сохраняются в бота напрямую.'
@@ -591,6 +599,7 @@ async function saveSettings() {
     intervalMinutes: parseInt(document.getElementById('interval').value) || 720,
     message: document.getElementById('message').value.trim() || 'up',
     invite: document.getElementById('invite').value.trim() || 'AYnkWUBwy',
+    apiUrl: document.getElementById('apiUrl').value.trim(),
     useBot: document.getElementById('useBot').value === 'true',
     channels: document.getElementById('channels').value.split('\n').map(s => s.trim()).filter(s => s)
   };
