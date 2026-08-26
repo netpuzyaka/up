@@ -6,198 +6,309 @@
 <title>Up Bot — Панель управления</title>
 <style>
   :root {
-    --bg: #0e1117;
-    --panel: #161b22;
-    --panel2: #1c2330;
-    --border: #2b3240;
-    --text: #e6edf3;
-    --muted: #8b949e;
-    --green: #2ea043;
-    --green-bg: rgba(46, 160, 67, .15);
-    --red: #f85149;
-    --red-bg: rgba(248, 81, 73, .15);
-    --blue: #4493f8;
-    --accent: #6e40c9;
-    --yellow: #d29922;
+    --bg: #070a12;
+    --panel: rgba(20, 26, 40, .72);
+    --panel-solid: #141a28;
+    --border: rgba(120, 140, 190, .16);
+    --text: #e8edf7;
+    --muted: #8b96ad;
+    --green: #2dd36f;
+    --red: #ff5c6c;
+    --blue: #58a6ff;
+    --accent: #8b5cf6;
+    --pink: #ec4899;
+    --yellow: #f5c542;
+    --cyan: #22d3ee;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
     background: var(--bg);
     color: var(--text);
-    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
-    padding: 24px;
+    font-family: "Segoe UI", -apple-system, Roboto, Helvetica, Arial, sans-serif;
+    padding: 26px 26px 60px;
+    min-height: 100vh;
+    overflow-x: hidden;
   }
-  h1 { font-size: 22px; margin-bottom: 4px; }
-  .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
-  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  /* animated 3D background */
+  .bg { position: fixed; inset: 0; z-index: -1; perspective: 900px; overflow: hidden; }
+  .blob {
+    position: absolute; border-radius: 50%; filter: blur(90px); opacity: .5;
+    animation: float 18s ease-in-out infinite;
+  }
+  .blob1 { width: 520px; height: 520px; background: radial-gradient(circle, #4c1d95, transparent 70%); top: -140px; left: -100px; }
+  .blob2 { width: 460px; height: 460px; background: radial-gradient(circle, #0e7490, transparent 70%); bottom: -120px; right: -80px; animation-delay: -6s; }
+  .blob3 { width: 380px; height: 380px; background: radial-gradient(circle, #9d174d, transparent 70%); top: 40%; left: 55%; animation-delay: -12s; }
+  @keyframes float {
+    0%, 100% { transform: translate3d(0, 0, 0) rotateX(8deg) rotateY(-6deg); }
+    50% { transform: translate3d(40px, -50px, 60px) rotateX(-6deg) rotateY(8deg); }
+  }
+  .grid-bg {
+    position: absolute; inset: 0;
+    background-image: linear-gradient(rgba(139, 92, 246, .06) 1px, transparent 1px),
+                      linear-gradient(90deg, rgba(139, 92, 246, .06) 1px, transparent 1px);
+    background-size: 46px 46px;
+    transform: rotateX(55deg) translateY(15%);
+    transform-origin: top;
+    mask-image: linear-gradient(to bottom, transparent, black 30%, black 70%, transparent);
+  }
+
+  h1 { font-size: 24px; font-weight: 800; letter-spacing: -.3px; }
+  .grad-text {
+    background: linear-gradient(90deg, var(--cyan), var(--accent), var(--pink));
+    -webkit-background-clip: text; background-clip: text; color: transparent;
+  }
+  .sub { color: var(--muted); font-size: 13px; }
+
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 14px; flex-wrap: wrap; margin-bottom: 22px; }
+  .logo-row { display: flex; align-items: center; gap: 14px; }
+  .logo {
+    width: 46px; height: 46px; border-radius: 14px;
+    background: linear-gradient(135deg, var(--accent), var(--cyan));
+    display: flex; align-items: center; justify-content: center; font-size: 22px;
+    box-shadow: 0 8px 26px rgba(139, 92, 246, .45);
+    transform: rotate(-6deg);
+  }
+
+  .pill {
+    display: inline-flex; align-items: center; gap: 8px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 99px;
+    padding: 8px 16px; font-size: 13px; backdrop-filter: blur(14px);
+  }
+  .dot { width: 9px; height: 9px; border-radius: 50%; flex-shrink: 0; }
+  .dot-on { background: var(--green); box-shadow: 0 0 10px var(--green); animation: pulse 2s infinite; }
+  .dot-off { background: var(--red); box-shadow: 0 0 10px var(--red); }
+  @keyframes pulse { 0%,100% { opacity: 1; } 50% { opacity: .45; } }
+
   .btn {
-    background: var(--panel2); color: var(--text); border: 1px solid var(--border);
-    border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 13px;
+    background: rgba(139, 92, 246, .14); color: var(--text);
+    border: 1px solid rgba(139, 92, 246, .35); border-radius: 10px;
+    padding: 9px 16px; cursor: pointer; font-size: 13px; font-weight: 600;
+    transition: transform .12s ease, box-shadow .12s ease, background .12s ease;
+    text-decoration: none; display: inline-flex; align-items: center; gap: 6px;
   }
-  .btn:hover { border-color: var(--blue); }
-  .btn.primary { background: var(--accent); border-color: var(--accent); font-weight: 600; }
-  .btn.danger { border-color: var(--red); color: var(--red); }
-  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .btn:hover { background: rgba(139, 92, 246, .26); transform: translateY(-1px); box-shadow: 0 6px 20px rgba(139, 92, 246, .3); }
+  .btn.primary { background: linear-gradient(135deg, var(--accent), #6d28d9); border-color: transparent; box-shadow: 0 8px 24px rgba(139, 92, 246, .4); }
+  .btn.danger { background: rgba(255, 92, 108, .12); border-color: rgba(255, 92, 108, .4); color: var(--red); }
+  .btn.danger:hover { background: rgba(255, 92, 108, .22); box-shadow: 0 6px 20px rgba(255, 92, 108, .25); }
+
+  .tabs { display: flex; gap: 8px; margin-bottom: 22px; flex-wrap: wrap; }
+  .tab {
+    padding: 10px 18px; border-radius: 12px; cursor: pointer; font-size: 14px; font-weight: 600;
+    color: var(--muted); border: 1px solid transparent; transition: all .15s ease;
+    background: transparent;
+  }
+  .tab:hover { color: var(--text); }
+  .tab.active {
+    color: var(--text); background: var(--panel); border-color: var(--border);
+    box-shadow: 0 8px 24px rgba(0,0,0,.35); backdrop-filter: blur(14px);
+  }
+  .tabview { display: none; }
+  .tabview.active { display: block; }
+
+  /* 3D cards */
+  .tilt {
+    transform: perspective(1000px) rotateX(var(--rx, 0deg)) rotateY(var(--ry, 0deg)) translateZ(var(--tz, 0px));
+    transition: transform .18s ease-out;
+    transform-style: preserve-3d;
+  }
   .card {
-    background: var(--panel); border: 1px solid var(--border);
-    border-radius: 12px; padding: 16px;
+    background: var(--panel); border: 1px solid var(--border); border-radius: 18px;
+    padding: 20px; backdrop-filter: blur(16px);
+    box-shadow: 0 10px 34px rgba(0, 0, 0, .38), inset 0 1px 0 rgba(255,255,255,.04);
   }
-  .card h3 { font-size: 14px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
-  .big { font-size: 28px; font-weight: 700; }
+  .card h3 { font-size: 12px; color: var(--muted); font-weight: 700; text-transform: uppercase; letter-spacing: 1.2px; margin-bottom: 12px; }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(250px, 1fr)); gap: 16px; margin-bottom: 26px; }
+  .big { font-size: 32px; font-weight: 800; letter-spacing: -.5px; line-height: 1.15; }
   .ok-color { color: var(--green); }
   .fail-color { color: var(--red); }
-  .section-title { font-size: 16px; font-weight: 700; margin: 26px 0 12px; display: flex; align-items: center; gap: 8px; }
-  .server-card { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
-  .server-name { font-size: 20px; font-weight: 700; }
+  .stat-line { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-top: 6px; gap: 8px; }
   .mono { font-family: Consolas, monospace; font-size: 12px; color: var(--muted); }
+  .section-title { font-size: 17px; font-weight: 800; margin: 30px 0 14px; display: flex; align-items: center; gap: 10px; }
   a { color: var(--blue); text-decoration: none; }
   a:hover { text-decoration: underline; }
-  .progress { height: 8px; background: var(--panel2); border-radius: 99px; overflow: hidden; display: flex; margin-top: 8px; }
-  .progress .ok-bar { background: var(--green); }
-  .progress .fail-bar { background: var(--red); }
-  .stat-line { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-top: 4px; gap: 8px; }
-  .channel-name { font-size: 15px; font-weight: 600; }
-  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; }
-  .badge-ok { background: var(--green-bg); color: var(--green); }
-  .badge-fail { background: var(--red-bg); color: var(--red); }
-  .badge-active { background: var(--green-bg); color: var(--green); }
-  .badge-inactive { background: var(--red-bg); color: var(--red); }
-  table { width: 100%; border-collapse: collapse; font-size: 13px; }
-  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
-  th { color: var(--muted); font-weight: 600; }
-  .account-card { display: flex; flex-direction: column; gap: 6px; }
+
+  .progress { height: 10px; background: rgba(255,255,255,.06); border-radius: 99px; overflow: hidden; display: flex; margin-top: 10px; }
+  .progress .ok-bar { background: linear-gradient(90deg, #16a34a, var(--green)); }
+  .progress .fail-bar { background: linear-gradient(90deg, #b91c1c, var(--red)); }
+  .badge { display: inline-block; padding: 3px 10px; border-radius: 99px; font-size: 12px; font-weight: 700; }
+  .badge-ok { background: rgba(45, 211, 111, .14); color: var(--green); }
+  .badge-fail { background: rgba(255, 92, 108, .14); color: var(--red); }
+  .badge-active { background: rgba(45, 211, 111, .14); color: var(--green); }
+  .badge-inactive { background: rgba(255, 92, 108, .14); color: var(--red); }
+
   .avatar {
-    width: 36px; height: 36px; border-radius: 50%; background: var(--accent);
-    display: flex; align-items: center; justify-content: center; font-weight: 700;
-    color: #fff; font-size: 15px; flex-shrink: 0;
+    width: 38px; height: 38px; border-radius: 12px; flex-shrink: 0;
+    background: linear-gradient(135deg, var(--accent), var(--pink));
+    display: flex; align-items: center; justify-content: center; font-weight: 800; color: #fff; font-size: 16px;
   }
-  .acc-head { display: flex; align-items: center; gap: 10px; }
-  .error-msg {
-    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
-    padding: 24px; text-align: center; color: var(--muted);
+  .acc-head { display: flex; align-items: center; gap: 12px; }
+
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 9px 12px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 700; font-size: 12px; text-transform: uppercase; letter-spacing: .6px; }
+
+  .charts-row { display: grid; grid-template-columns: 1fr 1fr; gap: 16px; margin-bottom: 26px; }
+  @media (max-width: 860px) { .charts-row { grid-template-columns: 1fr; } .row2 { grid-template-columns: 1fr !important; } }
+
+  .donut-wrap { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+  .legend { display: flex; flex-direction: column; gap: 8px; font-size: 13px; }
+  .legend-item { display: flex; align-items: center; gap: 8px; }
+  .swatch { width: 12px; height: 12px; border-radius: 4px; flex-shrink: 0; }
+
+  .pie-wrap { display: flex; align-items: center; gap: 22px; flex-wrap: wrap; }
+  .pie {
+    width: 190px; height: 190px; border-radius: 50%;
+    box-shadow: 0 12px 34px rgba(0,0,0,.45), inset 0 0 0 1px rgba(255,255,255,.05);
+    position: relative;
+    transform: rotateX(8deg) rotateY(-6deg);
   }
-  .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
-  .dot-on { background: var(--green); box-shadow: 0 0 8px var(--green); }
-  .dot-off { background: var(--red); box-shadow: 0 0 8px var(--red); }
+  .pie::after {
+    content: ""; position: absolute; inset: 26px; border-radius: 50%;
+    background: var(--panel-solid); box-shadow: inset 0 2px 10px rgba(0,0,0,.6);
+  }
+
+  .client-card { display: flex; flex-direction: column; gap: 8px; }
+  .client-head { display: flex; align-items: center; justify-content: space-between; gap: 8px; }
+  .client-name { font-size: 15px; font-weight: 700; }
+
   .input, textarea, select {
-    width: 100%; background: var(--panel2); color: var(--text);
-    border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px;
-    font-size: 13px; font-family: inherit;
+    width: 100%; background: rgba(255,255,255,.05); color: var(--text);
+    border: 1px solid var(--border); border-radius: 10px; padding: 10px 13px;
+    font-size: 13px; font-family: inherit; transition: border-color .15s ease, box-shadow .15s ease;
   }
+  .input:focus, textarea:focus, select:focus { outline: none; border-color: var(--accent); box-shadow: 0 0 0 3px rgba(139, 92, 246, .18); }
   textarea { min-height: 110px; resize: vertical; font-family: Consolas, monospace; }
-  .field { margin-bottom: 12px; }
-  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
-  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
-  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+  .field { margin-bottom: 14px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 6px; font-weight: 600; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 22px; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 8px; }
+
   .toast {
-    position: fixed; bottom: 20px; right: 20px; background: var(--panel2);
-    border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px;
-    font-size: 13px; max-width: 380px; z-index: 99; display: none;
+    position: fixed; bottom: 24px; right: 24px; z-index: 99;
+    background: var(--panel-solid); border: 1px solid var(--border); border-radius: 14px;
+    padding: 14px 20px; font-size: 13px; max-width: 400px; display: none;
+    box-shadow: 0 14px 40px rgba(0,0,0,.5); backdrop-filter: blur(16px);
   }
-  .toast.ok { border-color: var(--green); display: block; }
-  .toast.err { border-color: var(--red); display: block; }
-  @media (max-width: 600px) { body { padding: 12px; } .row2 { grid-template-columns: 1fr; } }
+  .toast.ok { border-color: rgba(45, 211, 111, .5); display: block; }
+  .toast.err { border-color: rgba(255, 92, 108, .5); display: block; }
+
+  .error-msg { background: var(--panel); border: 1px solid var(--border); border-radius: 18px; padding: 34px; text-align: center; color: var(--muted); }
+  @media (max-width: 600px) { body { padding: 14px 14px 60px; } }
 </style>
 </head>
 <body>
+  <div class="bg">
+    <div class="grid-bg"></div>
+    <div class="blob blob1"></div>
+    <div class="blob blob2"></div>
+    <div class="blob blob3"></div>
+  </div>
+
   <div class="topbar">
-    <div>
-      <h1>⬆️ Up Bot — Панель управления</h1>
-      <div class="sub" id="updated">Загрузка данных...</div>
+    <div class="logo-row">
+      <div class="logo">⬆️</div>
+      <div>
+        <h1><span class="grad-text">Up Bot</span> — Панель управления</h1>
+        <div class="sub" id="updated">Загрузка данных...</div>
+      </div>
     </div>
-    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
-      <span id="botStatus" class="sub" style="margin:0">Проверка бота...</span>
+    <div style="display:flex; gap:10px; align-items:center; flex-wrap:wrap">
+      <span class="pill"><span class="dot dot-off" id="clientsDot"></span><span id="clientsCount">Клиентов: —</span></span>
+      <span class="pill"><span class="dot dot-off" id="botDot"></span><span id="botStatus">Проверка бота...</span></span>
       <button class="btn" onclick="load()">🔄 Обновить</button>
     </div>
   </div>
 
-  <div class="section-title">⚙️ Настройки бота</div>
-  <div class="card">
-    <div class="row2">
-      <div>
-        <div class="field">
-          <label>Ссылки на темы (каналы) — по одной в строке (ссылка или ID)</label>
-          <textarea id="channels"></textarea>
+  <div class="tabs">
+    <div class="tab active" onclick="switchTab(this, 'overview')">📊 Обзор</div>
+    <div class="tab" onclick="switchTab(this, 'control')">⚙️ Управление</div>
+  </div>
+
+  <div class="tabview active" id="view-overview">
+    <div id="content"></div>
+  </div>
+
+  <div class="tabview" id="view-control">
+    <div class="section-title" style="margin-top:0">⚙️ Настройки бота</div>
+    <div class="card">
+      <div class="row2">
+        <div>
+          <div class="field">
+            <label>Ссылки на темы (каналы) — по одной в строке (ссылка или ID)</label>
+            <textarea id="channels"></textarea>
+          </div>
+        </div>
+        <div>
+          <div class="field"><label>Текст сообщения</label><input class="input" id="message" type="text" placeholder="up"></div>
+          <div class="field"><label>Интервал между отправками (минут)</label><input class="input" id="interval" type="number" min="1" max="10080" placeholder="720"></div>
+          <div class="field"><label>Код инвайта (без discord.gg/)</label><input class="input" id="invite" type="text" placeholder="AYnkWUBwy"></div>
+          <div class="field">
+            <label>Тип токена</label>
+            <select class="input" id="useBot">
+              <option value="false">Пользовательские токены</option>
+              <option value="true">Токены ботов</option>
+            </select>
+          </div>
+          <div class="actions">
+            <button class="btn primary" onclick="saveSettings()">💾 Сохранить настройки</button>
+            <button class="btn danger" onclick="stopBot()">⏹ Остановить бота</button>
+          </div>
+          <div class="stat-line" style="margin-top:12px"><span id="settingsNote"></span></div>
         </div>
       </div>
-      <div>
-        <div class="field">
-          <label>Текст сообщения</label>
-          <input class="input" id="message" type="text" placeholder="up">
+    </div>
+
+    <div class="section-title">🔑 Токены</div>
+    <div class="card">
+      <div class="row2">
+        <div>
+          <div class="field"><label>Discord-токены (по одному в строке)</label><textarea id="tokens"></textarea></div>
+          <div class="actions">
+            <button class="btn primary" onclick="saveTokens()">💾 Сохранить токены</button>
+            <a class="btn" id="downloadLink" href="#" download="tokens.txt">⬇️ Скачать tokens.txt</a>
+            <label class="btn" style="cursor:pointer">📁 Загрузить файл<input type="file" id="tokenFile" accept=".txt" style="display:none" onchange="uploadTokensFile(this)"></label>
+          </div>
         </div>
-        <div class="field">
-          <label>Интервал между отправками (минут)</label>
-          <input class="input" id="interval" type="number" min="1" max="10080" placeholder="720">
+        <div>
+          <div class="field"><label>GitHub токен (для отправки статистики на сайт)</label><input class="input" id="githubToken" type="password" placeholder="не задан" autocomplete="off"></div>
+          <div class="stat-line"><span id="githubStatus">—</span></div>
+          <div class="actions"><button class="btn primary" onclick="saveGithubToken()">💾 Сохранить GitHub токен</button></div>
+          <div class="stat-line" style="margin-top:12px"><span>Файл с токенами (txt, по одному в строке) можно выбрать — он сразу загрузится в бота.</span></div>
         </div>
-        <div class="field">
-          <label>Код инвайта (без discord.gg/)</label>
-          <input class="input" id="invite" type="text" placeholder="AYnkWUBwy">
-        </div>
-        <div class="field">
-          <label>Тип токена</label>
-          <select class="input" id="useBot">
-            <option value="false">Пользовательские токены</option>
-            <option value="true">Токены ботов</option>
-          </select>
-        </div>
-        <div class="actions">
-          <button class="btn primary" onclick="saveSettings()">💾 Сохранить настройки</button>
-          <button class="btn danger" onclick="stopBot()">⏹ Остановить бота</button>
-        </div>
-        <div class="stat-line" style="margin-top:12px"><span id="settingsNote"></span></div>
       </div>
     </div>
   </div>
-
-  <div class="section-title">🔑 Токены</div>
-  <div class="card">
-    <div class="row2">
-      <div>
-        <div class="field">
-          <label>Discord-токены (по одному в строке)</label>
-          <textarea id="tokens"></textarea>
-        </div>
-        <div class="actions">
-          <button class="btn primary" onclick="saveTokens()">💾 Сохранить токены</button>
-          <a class="btn" id="downloadLink" href="#" download="tokens.txt">⬇️ Скачать tokens.txt</a>
-          <label class="btn" style="cursor:pointer">📁 Загрузить файл<input type="file" id="tokenFile" accept=".txt" style="display:none" onchange="uploadTokensFile(this)"></label>
-        </div>
-      </div>
-      <div>
-        <div class="field">
-          <label>GitHub токен (для отправки статистики на сайт)</label>
-          <input class="input" id="githubToken" type="password" placeholder="не задан" autocomplete="off">
-        </div>
-        <div class="stat-line"><span id="githubStatus">—</span></div>
-        <div class="actions">
-          <button class="btn primary" onclick="saveGithubToken()">💾 Сохранить GitHub токен</button>
-        </div>
-        <div class="stat-line" style="margin-top:12px"><span>Файл с токенами (txt, по одному в строке) можно выбрать — он сразу загрузится в бота.</span></div>
-      </div>
-    </div>
-  </div>
-
-  <div id="content"></div>
 
   <div class="toast" id="toast"></div>
 
 <script>
 const LOCAL = 'http://127.0.0.1:8787';
-const DATA_URL = 'https://raw.githubusercontent.com/netpuzyaka/up/main/data/stats.json';
-const SETTINGS_URL = 'https://raw.githubusercontent.com/netpuzyaka/up/main/data/settings.json';
+const RAW = 'https://raw.githubusercontent.com/netpuzyaka/up/main/';
+const CLIENTS_URL = RAW + 'data/clients.json';
+const LEGACY_URL = RAW + 'data/stats.json';
+const SETTINGS_URL = RAW + 'data/settings.json';
 let localAvailable = false;
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 }
-
 function toast(msg, ok) {
   const t = document.getElementById('toast');
   t.textContent = msg;
   t.className = 'toast ' + (ok ? 'ok' : 'err');
-  setTimeout(() => t.className = 'toast', 4000);
+  setTimeout(() => t.className = 'toast', 4200);
 }
-
+function switchTab(el, id) {
+  document.querySelectorAll('.tab').forEach(t => t.classList.remove('active'));
+  document.querySelectorAll('.tabview').forEach(v => v.classList.remove('active'));
+  el.classList.add('active');
+  document.getElementById('view-' + id).classList.add('active');
+}
+async function fetchJson(url) {
+  const resp = await fetch(url, { cache: 'no-store' });
+  if (!resp.ok) throw new Error('HTTP ' + resp.status);
+  return await resp.json();
+}
 async function fetchLocal(path, timeoutMs = 2000) {
   const ctrl = new AbortController();
   const timer = setTimeout(() => ctrl.abort(), timeoutMs);
@@ -205,230 +316,235 @@ async function fetchLocal(path, timeoutMs = 2000) {
     const resp = await fetch(LOCAL + path, { signal: ctrl.signal });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
     return await resp.json();
-  } finally {
-    clearTimeout(timer);
-  }
+  } finally { clearTimeout(timer); }
 }
 
-async function checkLocal() {
-  try {
-    await fetchLocal('/api/status', 1500);
-    localAvailable = true;
-    document.getElementById('botStatus').innerHTML = '<span class="status-dot dot-on"></span>Бот запущен';
-  } catch {
-    localAvailable = false;
-    document.getElementById('botStatus').innerHTML = '<span class="status-dot dot-off"></span>Бот не запущен (просмотр из GitHub)';
-  }
-}
-
-async function loadSettings() {
-  let s = null;
-  if (localAvailable) {
-    try { s = await fetchLocal('/api/settings'); }
-    catch { s = null; }
-  }
-  if (!s) {
-    try {
-      const resp = await fetch(SETTINGS_URL, { cache: 'no-store' });
-      if (resp.ok) s = await resp.json();
-    } catch {}
-  }
-  document.getElementById('channels').value = (s && s.channels ? s.channels : []).join('\n');
-  document.getElementById('message').value = (s && s.message) || 'up';
-  document.getElementById('interval').value = (s && s.intervalMinutes) || 720;
-  document.getElementById('invite').value = (s && s.invite) || 'AYnkWUBwy';
-  document.getElementById('useBot').value = String(!!(s && s.useBot));
-  document.getElementById('settingsNote').textContent = localAvailable
-    ? 'Настройки сохраняются в бота напрямую.'
-    : 'Локальный бот недоступен — сохранить настройки нельзя. Запустите бота на этом ПК.';
-}
-
-async function saveSettings() {
-  if (!localAvailable) {
-    toast('Бот не запущен на этом ПК — сохранить нельзя. Запустите бота и обновите страницу.', false);
-    return;
-  }
-  const payload = {
-    intervalMinutes: parseInt(document.getElementById('interval').value) || 720,
-    message: document.getElementById('message').value.trim() || 'up',
-    invite: document.getElementById('invite').value.trim() || 'AYnkWUBwy',
-    useBot: document.getElementById('useBot').value === 'true',
-    channels: document.getElementById('channels').value.split('\n').map(s => s.trim()).filter(s => s)
-  };
-  try {
-    const resp = await fetch(LOCAL + '/api/settings', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify(payload)
+/* ---------- 3D tilt ---------- */
+function attachTilt() {
+  document.querySelectorAll('.tilt').forEach(el => {
+    el.addEventListener('mousemove', e => {
+      const r = el.getBoundingClientRect();
+      const px = (e.clientX - r.left) / r.width - .5;
+      const py = (e.clientY - r.top) / r.height - .5;
+      el.style.setProperty('--ry', (px * 10) + 'deg');
+      el.style.setProperty('--rx', (-py * 10) + 'deg');
+      el.style.setProperty('--tz', '10px');
     });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    toast('✅ Настройки сохранены и применены.', true);
-    load();
-  } catch (e) {
-    toast('❌ Ошибка сохранения: ' + e.message, false);
-  }
-}
-
-async function stopBot() {
-  if (!localAvailable) { toast('Бот не запущен.', false); return; }
-  if (!confirm('Остановить бота?')) return;
-  try {
-    await fetch(LOCAL + '/api/stop', { method: 'POST' });
-    toast('Бот остановлен.', true);
-  } catch (e) {
-    toast('Ошибка: ' + e.message, false);
-  }
-}
-
-async function loadTokens() {
-  document.getElementById('downloadLink').href = LOCAL + '/api/tokens/download';
-  if (!localAvailable) { return; }
-  try {
-    const data = await fetchLocal('/api/tokens');
-    document.getElementById('tokens').value = (data.tokens || []).join('\n');
-  } catch {}
-}
-
-async function loadGithub() {
-  if (!localAvailable) { document.getElementById('githubStatus').textContent = '—'; return; }
-  try {
-    const g = await fetchLocal('/api/github');
-    document.getElementById('githubStatus').textContent = g.set ? ('Задан: ' + g.masked) : 'не задан';
-  } catch {
-    document.getElementById('githubStatus').textContent = '—';
-  }
-}
-
-async function saveTokens() {
-  if (!localAvailable) { toast('Бот не запущен на этом ПК — сохранить нельзя.', false); return; }
-  const tokens = document.getElementById('tokens').value.split('\n').map(s => s.trim()).filter(s => s);
-  try {
-    const resp = await fetch(LOCAL + '/api/tokens', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ tokens })
+    el.addEventListener('mouseleave', () => {
+      el.style.setProperty('--rx', '0deg');
+      el.style.setProperty('--ry', '0deg');
+      el.style.setProperty('--tz', '0px');
     });
-    const res = await resp.json();
-    if (!resp.ok) throw new Error(res.error || ('HTTP ' + resp.status));
-    toast(`✅ Токенов: ${res.total}, добавлено новых: ${res.added}, ошибок: ${res.failedCount}`, true);
-    loadTokens();
-    load();
-  } catch (e) {
-    toast('❌ ' + e.message, false);
-  }
+  });
 }
 
-async function uploadTokensFile(input) {
-  const file = input.files[0];
-  if (!file) return;
-  const text = await file.text();
-  document.getElementById('tokens').value = text;
-  await saveTokens();
-  input.value = '';
+/* ---------- charts ---------- */
+const CH_PALETTE = ['#8b5cf6', '#22d3ee', '#ec4899', '#f5c542', '#2dd36f', '#58a6ff', '#fb923c', '#a3e635'];
+
+function donutSVG(ok, fail, size = 180, centerTitle = 'Всего') {
+  const total = ok + fail;
+  const okPct = total ? ok / total : 0;
+  const r = 62, c = 2 * Math.PI * r;
+  const off = c * (1 - okPct);
+  const cx = size / 2, cy = size / 2;
+  return `<svg width="${size}" height="${size}" viewBox="0 0 ${size} ${size}" style="filter: drop-shadow(0 10px 26px rgba(0,0,0,.45))">
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="rgba(255,255,255,.06)" stroke-width="20"/>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#2dd36f" stroke-width="20"
+      stroke-dasharray="${(okPct * c).toFixed(1)} ${c.toFixed(1)}" stroke-linecap="round"
+      transform="rotate(-90 ${cx} ${cy})">
+      <animate attributeName="stroke-dasharray" from="0 ${c.toFixed(1)}" to="${(okPct * c).toFixed(1)} ${c.toFixed(1)}" dur="1s" fill="freeze"/>
+    </circle>
+    <circle cx="${cx}" cy="${cy}" r="${r}" fill="none" stroke="#ff5c6c" stroke-width="20"
+      stroke-dasharray="${(off).toFixed(1)} ${c.toFixed(1)}" stroke-linecap="round"
+      transform="rotate(${-90 + okPct * 360} ${cx} ${cy})" opacity="${okPct >= .999 ? 0 : 1}"/>
+    <text x="${cx}" y="${cy - 6}" text-anchor="middle" fill="#e8edf7" font-size="24" font-weight="800">${total}</text>
+    <text x="${cx}" y="${cy + 18}" text-anchor="middle" fill="#8b96ad" font-size="12">${centerTitle}</text>
+  </svg>`;
 }
 
-async function saveGithubToken() {
-  if (!localAvailable) { toast('Бот не запущен на этом ПК — сохранить нельзя.', false); return; }
-  const token = document.getElementById('githubToken').value.trim();
-  if (!token) { toast('Введите токен.', false); return; }
-  try {
-    const resp = await fetch(LOCAL + '/api/github', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ token })
-    });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    document.getElementById('githubToken').value = '';
-    toast('✅ GitHub токен сохранён.', true);
-    loadGithub();
-  } catch (e) {
-    toast('❌ ' + e.message, false);
-  }
+function pieHTML(channels) {
+  const total = channels.reduce((s, ch) => s + ch.sends, 0);
+  if (!total) return '<div class="sub">Нет данных для диаграммы.</div>';
+  let acc = 0;
+  const stops = [];
+  channels.forEach((ch, i) => {
+    const from = acc / total * 360;
+    acc += ch.sends;
+    const to = acc / total * 360;
+    stops.push(`${CH_PALETTE[i % CH_PALETTE.length]} ${from.toFixed(1)}deg ${to.toFixed(1)}deg`);
+  });
+  const legend = channels.map((ch, i) => `
+    <div class="legend-item">
+      <span class="swatch" style="background:${CH_PALETTE[i % CH_PALETTE.length]}"></span>
+      <span># ${esc(ch.name || ch.id)} — ${ch.sends}</span>
+    </div>`).join('');
+  return `<div class="pie-wrap">
+    <div class="pie" style="background: conic-gradient(${stops.join(', ')})"></div>
+    <div class="legend">${legend}</div>
+  </div>`;
 }
 
+/* ---------- data loading ---------- */
 async function load() {
   const el = document.getElementById('content');
   try {
-    const resp = await fetch(DATA_URL, { cache: 'no-store' });
-    if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    render(await resp.json());
+    let registry = {};
+    try { registry = (await fetchJson(CLIENTS_URL)).clients || {}; } catch {}
+    const ids = Object.keys(registry);
+    let perClient = [];
+    for (const id of ids) {
+      const c = registry[id];
+      const path = RAW + (c.statsPath || `data/clients/${id}/stats.json`);
+      let stats = null;
+      try { stats = await fetchJson(path); } catch {}
+      perClient.push({ id, name: c.name || id, lastSeen: c.lastSeen || '', stats });
+    }
+    if (perClient.length === 0) {
+      try {
+        const legacy = await fetchJson(LEGACY_URL);
+        perClient.push({ id: 'main', name: 'Главный клиент', lastSeen: legacy.updatedAt || '', stats: legacy });
+      } catch {}
+    }
+    render(perClient);
   } catch (e) {
-    el.innerHTML = '<div class="error-msg">Нет данных. Файл статистики ещё не создан ботом (data/stats.json в репозитории).<br>Запустите бота хотя бы раз с github_token.txt.</div>';
+    el.innerHTML = '<div class="error-msg">Ошибка загрузки: ' + esc(e.message) + '</div>';
     document.getElementById('updated').textContent = 'Ошибка: ' + e.message;
   }
 }
 
-function render(d) {
-  const srv = d.server || {};
-  const channels = d.channels || [];
-  const accounts = d.accounts || [];
-  const events = (d.events || []).slice(0, 150);
+function render(perClient) {
+  const now = Date.now();
+  const online = perClient.filter(c => c.lastSeen && (now - Date.parse(c.lastSeen)) < 15 * 60 * 1000).length;
+  const total = perClient.length;
 
-  const totalSends = channels.reduce((s, c) => s + (c.sends || 0), 0);
-  const totalOk = channels.reduce((s, c) => s + (c.ok || 0), 0);
-  const totalFail = channels.reduce((s, c) => s + (c.fail || 0), 0);
+  const cd = document.getElementById('clientsDot');
+  cd.className = 'dot ' + (online > 0 ? 'dot-on' : 'dot-off');
+  document.getElementById('clientsCount').textContent = `Клиентов: ${online} онлайн / ${total} всего`;
 
-  document.getElementById('updated').textContent = 'Обновлено: ' + (d.updatedAt || '—') + ' · автообновление каждые 60 сек';
+  const withStats = perClient.filter(c => c.stats);
+  const allCh = {}, allAcc = {};
+  let events = [];
+  let totalSends = 0, totalOk = 0, totalFail = 0;
+  for (const c of withStats) {
+    const st = c.stats;
+    for (const ch of (st.channels || [])) {
+      const k = ch.id;
+      if (!allCh[k]) allCh[k] = { id: ch.id, name: ch.name, sends: 0, ok: 0, fail: 0, lastResult: ch.lastResult, lastTime: ch.lastTime, clients: {} };
+      allCh[k].sends += ch.sends || 0;
+      allCh[k].ok += ch.ok || 0;
+      allCh[k].fail += ch.fail || 0;
+      allCh[k].clients[c.name] = true;
+      if (ch.lastTime > (allCh[k].lastTime || '')) { allCh[k].lastTime = ch.lastTime; allCh[k].lastResult = ch.lastResult; }
+    }
+    for (const a of (st.accounts || [])) {
+      const k = a.username;
+      if (!allAcc[k]) allAcc[k] = { username: a.username, sends: 0, ok: 0, fail: 0, lastChannel: a.lastChannel, lastTime: a.lastTime, status: a.status, clients: {} };
+      allAcc[k].sends += a.sends || 0;
+      allAcc[k].ok += a.ok || 0;
+      allAcc[k].fail += a.fail || 0;
+      allAcc[k].clients[c.name] = true;
+    }
+    for (const e of (st.events || [])) events.push({ ...e, client: c.name });
+    totalSends += (st.channels || []).reduce((s, x) => s + (x.sends || 0), 0);
+    totalOk += (st.channels || []).reduce((s, x) => s + (x.ok || 0), 0);
+    totalFail += (st.channels || []).reduce((s, x) => s + (x.fail || 0), 0);
+  }
+  events.sort((a, b) => (b.time || '').localeCompare(a.time || ''));
+  events = events.slice(0, 200);
+
+  const channels = Object.values(allCh).sort((a, b) => b.sends - a.sends);
+  const accounts = Object.values(allAcc);
+  const lastUpdate = perClient.map(c => c.stats && c.stats.updatedAt).filter(Boolean).sort().pop() || '—';
+  document.getElementById('updated').textContent = 'Обновлено: ' + lastUpdate + ' · автообновление каждые 60 сек';
 
   let html = '';
 
-  html += `<div class="card server-card">
-    <div class="server-name">🌐 ${esc(srv.name || 'Сервер')}</div>
-    <div class="mono">ID: ${esc(srv.id || '—')}</div>
-    <div><a href="${esc(srv.invite || '#')}" target="_blank">${esc(srv.invite || '—')}</a></div>
-  </div>`;
-
+  /* summary */
   html += `<div class="grid">
-    <div class="card"><h3>Всего отправок</h3><div class="big">${totalSends}</div></div>
-    <div class="card"><h3>Успешно</h3><div class="big ok-color">${totalOk}</div></div>
-    <div class="card"><h3>Неудачно</h3><div class="big fail-color">${totalFail}</div></div>
-    <div class="card"><h3>Аккаунты</h3><div class="big">${accounts.length}</div></div>
+    <div class="card tilt"><h3>Всего отправок</h3><div class="big">${totalSends}</div></div>
+    <div class="card tilt"><h3>Успешно</h3><div class="big ok-color">${totalOk}</div></div>
+    <div class="card tilt"><h3>Неудачно</h3><div class="big fail-color">${totalFail}</div></div>
+    <div class="card tilt"><h3>Аккаунты</h3><div class="big">${accounts.length}</div></div>
   </div>`;
 
-  html += `<div class="section-title">📢 Темы (каналы), куда отправляются сообщения</div><div class="grid">`;
-  for (const c of channels) {
-    const ok = c.ok || 0, fail = c.fail || 0, total = ok + fail;
-    const pctOk = total ? Math.round(ok / total * 100) : 0;
-    html += `<div class="card">
-      <div class="channel-name"># ${esc(c.name || c.id)}</div>
-      <div class="mono">ID: ${esc(c.id)}</div>
-      <div class="progress">
-        <div class="ok-bar" style="width:${pctOk}%"></div>
-        <div class="fail-bar" style="width:${total ? 100 - pctOk : 0}%"></div>
+  /* charts */
+  html += `<div class="charts-row">
+    <div class="card tilt"><h3>Соотношение успех / ошибки</h3>
+      <div class="donut-wrap">${donutSVG(totalOk, totalFail)}
+        <div class="legend">
+          <div class="legend-item"><span class="swatch" style="background:#2dd36f"></span><span>Успешно: ${totalOk}</span></div>
+          <div class="legend-item"><span class="swatch" style="background:#ff5c6c"></span><span>Ошибки: ${totalFail}</span></div>
+        </div>
       </div>
-      <div class="stat-line"><span>✅ ${ok} успешно</span><span>❌ ${fail} ошибок</span></div>
-      <div class="stat-line"><span>Всего: ${total}</span>
-        <span class="badge ${(c.lastResult === 'ok') ? 'badge-ok' : 'badge-fail'}">${(c.lastResult === 'ok') ? 'последняя: успех' : (c.lastResult === 'fail' ? 'последняя: ошибка' : 'нет данных')}</span></div>
-      <div class="stat-line"><span>Последняя: ${esc(c.lastTime || '—')}</span></div>
+    </div>
+    <div class="card tilt"><h3>Распределение по темам (каналам)</h3>${pieHTML(channels)}</div>
+  </div>`;
+
+  /* clients */
+  html += `<div class="section-title">🖥️ Клиенты (${total})</div><div class="grid">`;
+  for (const c of perClient) {
+    const isOn = c.lastSeen && (now - Date.parse(c.lastSeen)) < 15 * 60 * 1000;
+    const st = c.stats;
+    const sends = st ? (st.channels || []).reduce((s, x) => s + (x.sends || 0), 0) : 0;
+    const ok = st ? (st.channels || []).reduce((s, x) => s + (x.ok || 0), 0) : 0;
+    const fail = sends - ok;
+    const pct = sends ? Math.round(ok / sends * 100) : 0;
+    html += `<div class="card tilt client-card">
+      <div class="client-head">
+        <div class="client-name">🖥️ ${esc(c.name || c.id)}</div>
+        <span class="badge ${isOn ? 'badge-active' : 'badge-inactive'}">${isOn ? '🟢 онлайн' : '🔴 офлайн'}</span>
+      </div>
+      <div class="mono">ID: ${esc(c.id)}</div>
+      <div class="stat-line"><span>Активность:</span><span>${esc((c.lastSeen || '—').replace('T', ' ').slice(0, 19))}</span></div>
+      <div class="stat-line"><span>Отправок:</span><span>${sends} (✅ ${ok} / ❌ ${fail})</span></div>
+      <div class="progress"><div class="ok-bar" style="width:${pct}%"></div><div class="fail-bar" style="width:${100 - pct}%"></div></div>
     </div>`;
   }
   html += '</div>';
 
-  html += `<div class="section-title">👤 Discord-аккаунты</div><div class="grid">`;
+  /* channels */
+  html += `<div class="section-title">📢 Темы (каналы)</div><div class="grid">`;
+  for (const ch of channels) {
+    const total = ch.sends, pct = total ? Math.round(ch.ok / total * 100) : 0;
+    const clients = Object.keys(ch.clients).join(', ');
+    html += `<div class="card tilt">
+      <div class="channel-name" style="font-size:15px;font-weight:700"># ${esc(ch.name || ch.id)}</div>
+      <div class="mono">ID: ${esc(ch.id)}</div>
+      <div class="stat-line"><span>Клиенты:</span><span>${esc(clients)}</span></div>
+      <div class="progress"><div class="ok-bar" style="width:${pct}%"></div><div class="fail-bar" style="width:${total ? 100 - pct : 0}%"></div></div>
+      <div class="stat-line"><span>✅ ${ch.ok} / ❌ ${ch.fail}</span><span class="badge ${ch.lastResult === 'ok' ? 'badge-ok' : 'badge-fail'}">${ch.lastResult === 'ok' ? 'последняя: успех' : (ch.lastResult === 'fail' ? 'последняя: ошибка' : 'нет данных')}</span></div>
+      <div class="stat-line"><span>Последняя:</span><span>${esc(ch.lastTime || '—')}</span></div>
+    </div>`;
+  }
+  html += '</div>';
+
+  /* accounts */
+  html += `<div class="section-title">👤 Аккаунты</div><div class="grid">`;
   for (const a of accounts) {
-    const ok = a.ok || 0, fail = a.fail || 0;
-    html += `<div class="card">
+    html += `<div class="card tilt">
       <div class="acc-head">
         <div class="avatar">${esc((a.username || '?').slice(0, 1).toUpperCase())}</div>
         <div>
-          <div class="channel-name">${esc(a.username || '—')}</div>
+          <div style="font-weight:700">${esc(a.username)}</div>
           <span class="badge ${a.status === 'active' ? 'badge-active' : 'badge-inactive'}">${a.status === 'active' ? 'активен' : 'неактивен'}</span>
         </div>
       </div>
-      <div class="stat-line"><span>Отправок: ${a.sends || 0}</span><span>✅ ${ok} / ❌ ${fail}</span></div>
+      <div class="stat-line"><span>Отправок:</span><span>${a.sends} (✅ ${a.ok} / ❌ ${a.fail})</span></div>
       <div class="stat-line"><span>Последний канал:</span><span># ${esc(a.lastChannel || '—')}</span></div>
       <div class="stat-line"><span>Последняя отправка:</span><span>${esc(a.lastTime || '—')}</span></div>
     </div>`;
   }
   html += '</div>';
 
+  /* events */
   html += `<div class="section-title">📋 Журнал отправок (последние ${events.length})</div>
-  <div class="card" style="overflow-x:auto">
+  <div class="card" style="overflow-x:auto; padding:8px 0">
   <table>
-    <tr><th>Время</th><th>Аккаунт</th><th>Канал</th><th>Результат</th><th>Ошибка</th></tr>`;
+    <tr><th>Время</th><th>Клиент</th><th>Аккаунт</th><th>Канал</th><th>Результат</th><th>Ошибка</th></tr>`;
   for (const e of events) {
     html += `<tr>
       <td class="mono">${esc(e.time)}</td>
+      <td>${esc(e.client || '—')}</td>
       <td>${esc(e.account)}</td>
       <td># ${esc(e.channel)}</td>
       <td><span class="badge ${e.ok ? 'badge-ok' : 'badge-fail'}">${e.ok ? '✅ успех' : '❌ ошибка'}</span></td>
@@ -438,6 +554,114 @@ function render(d) {
   html += '</table></div>';
 
   document.getElementById('content').innerHTML = html;
+  attachTilt();
+}
+
+/* ---------- local bot ---------- */
+async function checkLocal() {
+  try {
+    await fetchLocal('/api/status', 1500);
+    localAvailable = true;
+    document.getElementById('botDot').className = 'dot dot-on';
+    document.getElementById('botStatus').textContent = 'Бот запущен на этом ПК';
+  } catch {
+    localAvailable = false;
+    document.getElementById('botDot').className = 'dot dot-off';
+    document.getElementById('botStatus').textContent = 'Локальный бот не запущен';
+  }
+}
+
+/* ---------- settings ---------- */
+async function loadSettings() {
+  let s = null;
+  if (localAvailable) { try { s = await fetchLocal('/api/settings'); } catch { s = null; } }
+  if (!s) { try { s = await fetchJson(SETTINGS_URL); } catch {} }
+  document.getElementById('channels').value = (s && s.channels ? s.channels : []).join('\n');
+  document.getElementById('message').value = (s && s.message) || 'up';
+  document.getElementById('interval').value = (s && s.intervalMinutes) || 720;
+  document.getElementById('invite').value = (s && s.invite) || 'AYnkWUBwy';
+  document.getElementById('useBot').value = String(!!(s && s.useBot));
+  document.getElementById('settingsNote').textContent = localAvailable
+    ? 'Настройки сохраняются в бота напрямую.'
+    : 'Локальный бот недоступен — сохранить настройки нельзя. Запустите бота на этом ПК.';
+}
+async function saveSettings() {
+  if (!localAvailable) { toast('Бот не запущен на этом ПК — сохранить нельзя.', false); return; }
+  const payload = {
+    intervalMinutes: parseInt(document.getElementById('interval').value) || 720,
+    message: document.getElementById('message').value.trim() || 'up',
+    invite: document.getElementById('invite').value.trim() || 'AYnkWUBwy',
+    useBot: document.getElementById('useBot').value === 'true',
+    channels: document.getElementById('channels').value.split('\n').map(s => s.trim()).filter(s => s)
+  };
+  try {
+    const resp = await fetch(LOCAL + '/api/settings', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify(payload)
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    toast('✅ Настройки сохранены и применены.', true);
+  } catch (e) { toast('❌ Ошибка сохранения: ' + e.message, false); }
+}
+
+/* ---------- tokens ---------- */
+async function loadTokens() {
+  document.getElementById('downloadLink').href = LOCAL + '/api/tokens/download';
+  if (!localAvailable) return;
+  try {
+    const data = await fetchLocal('/api/tokens');
+    document.getElementById('tokens').value = (data.tokens || []).join('\n');
+  } catch {}
+}
+async function loadGithub() {
+  if (!localAvailable) { document.getElementById('githubStatus').textContent = '—'; return; }
+  try {
+    const g = await fetchLocal('/api/github');
+    document.getElementById('githubStatus').textContent = g.set ? ('Задан: ' + g.masked) : 'не задан';
+  } catch { document.getElementById('githubStatus').textContent = '—'; }
+}
+async function saveTokens() {
+  if (!localAvailable) { toast('Бот не запущен на этом ПК — сохранить нельзя.', false); return; }
+  const tokens = document.getElementById('tokens').value.split('\n').map(s => s.trim()).filter(s => s);
+  try {
+    const resp = await fetch(LOCAL + '/api/tokens', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ tokens })
+    });
+    const res = await resp.json();
+    if (!resp.ok) throw new Error(res.error || ('HTTP ' + resp.status));
+    toast(`✅ Токенов: ${res.total}, добавлено новых: ${res.added}, ошибок: ${res.failedCount}`, true);
+    loadTokens();
+  } catch (e) { toast('❌ ' + e.message, false); }
+}
+async function uploadTokensFile(input) {
+  const file = input.files[0];
+  if (!file) return;
+  const text = await file.text();
+  document.getElementById('tokens').value = text;
+  await saveTokens();
+  input.value = '';
+}
+async function saveGithubToken() {
+  if (!localAvailable) { toast('Бот не запущен на этом ПК — сохранить нельзя.', false); return; }
+  const token = document.getElementById('githubToken').value.trim();
+  if (!token) { toast('Введите токен.', false); return; }
+  try {
+    const resp = await fetch(LOCAL + '/api/github', {
+      method: 'POST', headers: { 'Content-Type': 'application/json' }, body: JSON.stringify({ token })
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    document.getElementById('githubToken').value = '';
+    toast('✅ GitHub токен сохранён.', true);
+    loadGithub();
+  } catch (e) { toast('❌ ' + e.message, false); }
+}
+
+async function stopBot() {
+  if (!localAvailable) { toast('Бот не запущен.', false); return; }
+  if (!confirm('Остановить бота?')) return;
+  try {
+    await fetch(LOCAL + '/api/stop', { method: 'POST' });
+    toast('Бот остановлен.', true);
+  } catch (e) { toast('Ошибка: ' + e.message, false); }
 }
 
 (async function init() {
