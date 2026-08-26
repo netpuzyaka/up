@@ -18,6 +18,7 @@
     --red-bg: rgba(248, 81, 73, .15);
     --blue: #4493f8;
     --accent: #6e40c9;
+    --yellow: #d29922;
   }
   * { box-sizing: border-box; margin: 0; padding: 0; }
   body {
@@ -34,6 +35,8 @@
     border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 13px;
   }
   .btn:hover { border-color: var(--blue); }
+  .btn.primary { background: var(--accent); border-color: var(--accent); font-weight: 600; }
+  .btn.danger { border-color: var(--red); color: var(--red); }
   .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-bottom: 24px; }
   .card {
     background: var(--panel); border: 1px solid var(--border);
@@ -52,7 +55,7 @@
   .progress { height: 8px; background: var(--panel2); border-radius: 99px; overflow: hidden; display: flex; margin-top: 8px; }
   .progress .ok-bar { background: var(--green); }
   .progress .fail-bar { background: var(--red); }
-  .stat-line { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .stat-line { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-top: 4px; gap: 8px; }
   .channel-name { font-size: 15px; font-weight: 600; }
   .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; }
   .badge-ok { background: var(--green-bg); color: var(--green); }
@@ -73,9 +76,27 @@
     background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
     padding: 24px; text-align: center; color: var(--muted);
   }
-  .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
-  .filters .btn.active { border-color: var(--blue); background: rgba(68, 147, 248, .12); }
-  @media (max-width: 600px) { body { padding: 12px; } }
+  .status-dot { display: inline-block; width: 10px; height: 10px; border-radius: 50%; margin-right: 6px; }
+  .dot-on { background: var(--green); box-shadow: 0 0 8px var(--green); }
+  .dot-off { background: var(--red); box-shadow: 0 0 8px var(--red); }
+  .input, textarea, select {
+    width: 100%; background: var(--panel2); color: var(--text);
+    border: 1px solid var(--border); border-radius: 8px; padding: 9px 12px;
+    font-size: 13px; font-family: inherit;
+  }
+  textarea { min-height: 110px; resize: vertical; font-family: Consolas, monospace; }
+  .field { margin-bottom: 12px; }
+  .field label { display: block; font-size: 12px; color: var(--muted); margin-bottom: 5px; }
+  .row2 { display: grid; grid-template-columns: 1fr 1fr; gap: 12px; }
+  .actions { display: flex; gap: 10px; flex-wrap: wrap; margin-top: 6px; }
+  .toast {
+    position: fixed; bottom: 20px; right: 20px; background: var(--panel2);
+    border: 1px solid var(--border); border-radius: 10px; padding: 12px 18px;
+    font-size: 13px; max-width: 380px; z-index: 99; display: none;
+  }
+  .toast.ok { border-color: var(--green); display: block; }
+  .toast.err { border-color: var(--red); display: block; }
+  @media (max-width: 600px) { body { padding: 12px; } .row2 { grid-template-columns: 1fr; } }
 </style>
 </head>
 <body>
@@ -84,16 +105,151 @@
       <h1>⬆️ Up Bot — Панель управления</h1>
       <div class="sub" id="updated">Загрузка данных...</div>
     </div>
-    <button class="btn" onclick="load()">🔄 Обновить</button>
+    <div style="display:flex; gap:8px; align-items:center; flex-wrap:wrap">
+      <span id="botStatus" class="sub" style="margin:0">Проверка бота...</span>
+      <button class="btn" onclick="load()">🔄 Обновить</button>
+    </div>
+  </div>
+
+  <div class="section-title">⚙️ Настройки бота</div>
+  <div class="card">
+    <div class="row2">
+      <div>
+        <div class="field">
+          <label>Ссылки на темы (каналы) — по одной в строке (ссылка или ID)</label>
+          <textarea id="channels"></textarea>
+        </div>
+      </div>
+      <div>
+        <div class="field">
+          <label>Текст сообщения</label>
+          <input class="input" id="message" type="text" placeholder="up">
+        </div>
+        <div class="field">
+          <label>Интервал между отправками (минут)</label>
+          <input class="input" id="interval" type="number" min="1" max="10080" placeholder="720">
+        </div>
+        <div class="field">
+          <label>Код инвайта (без discord.gg/)</label>
+          <input class="input" id="invite" type="text" placeholder="AYnkWUBwy">
+        </div>
+        <div class="field">
+          <label>Тип токена</label>
+          <select class="input" id="useBot">
+            <option value="false">Пользовательские токены</option>
+            <option value="true">Токены ботов</option>
+          </select>
+        </div>
+        <div class="actions">
+          <button class="btn primary" onclick="saveSettings()">💾 Сохранить настройки</button>
+          <button class="btn danger" onclick="stopBot()">⏹ Остановить бота</button>
+        </div>
+        <div class="stat-line" style="margin-top:12px"><span id="settingsNote"></span></div>
+      </div>
+    </div>
   </div>
 
   <div id="content"></div>
 
+  <div class="toast" id="toast"></div>
+
 <script>
+const LOCAL = 'http://127.0.0.1:8787';
 const DATA_URL = 'https://raw.githubusercontent.com/netpuzyaka/up/main/data/stats.json';
+const SETTINGS_URL = 'https://raw.githubusercontent.com/netpuzyaka/up/main/data/settings.json';
+let localAvailable = false;
 
 function esc(s) {
   return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+function toast(msg, ok) {
+  const t = document.getElementById('toast');
+  t.textContent = msg;
+  t.className = 'toast ' + (ok ? 'ok' : 'err');
+  setTimeout(() => t.className = 'toast', 4000);
+}
+
+async function fetchLocal(path, timeoutMs = 2000) {
+  const ctrl = new AbortController();
+  const timer = setTimeout(() => ctrl.abort(), timeoutMs);
+  try {
+    const resp = await fetch(LOCAL + path, { signal: ctrl.signal });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    return await resp.json();
+  } finally {
+    clearTimeout(timer);
+  }
+}
+
+async function checkLocal() {
+  try {
+    await fetchLocal('/api/status', 1500);
+    localAvailable = true;
+    document.getElementById('botStatus').innerHTML = '<span class="status-dot dot-on"></span>Бот запущен';
+  } catch {
+    localAvailable = false;
+    document.getElementById('botStatus').innerHTML = '<span class="status-dot dot-off"></span>Бот не запущен (просмотр из GitHub)';
+  }
+}
+
+async function loadSettings() {
+  let s = null;
+  if (localAvailable) {
+    try { s = await fetchLocal('/api/settings'); }
+    catch { s = null; }
+  }
+  if (!s) {
+    try {
+      const resp = await fetch(SETTINGS_URL, { cache: 'no-store' });
+      if (resp.ok) s = await resp.json();
+    } catch {}
+  }
+  document.getElementById('channels').value = (s && s.channels ? s.channels : []).join('\n');
+  document.getElementById('message').value = (s && s.message) || 'up';
+  document.getElementById('interval').value = (s && s.intervalMinutes) || 720;
+  document.getElementById('invite').value = (s && s.invite) || 'AYnkWUBwy';
+  document.getElementById('useBot').value = String(!!(s && s.useBot));
+  document.getElementById('settingsNote').textContent = localAvailable
+    ? 'Настройки сохраняются в бота напрямую.'
+    : 'Локальный бот недоступен — сохранить настройки нельзя. Запустите бота на этом ПК.';
+}
+
+async function saveSettings() {
+  if (!localAvailable) {
+    toast('Бот не запущен на этом ПК — сохранить нельзя. Запустите бота и обновите страницу.', false);
+    return;
+  }
+  const payload = {
+    intervalMinutes: parseInt(document.getElementById('interval').value) || 720,
+    message: document.getElementById('message').value.trim() || 'up',
+    invite: document.getElementById('invite').value.trim() || 'AYnkWUBwy',
+    useBot: document.getElementById('useBot').value === 'true',
+    channels: document.getElementById('channels').value.split('\n').map(s => s.trim()).filter(s => s)
+  };
+  try {
+    const resp = await fetch(LOCAL + '/api/settings', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(payload)
+    });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    toast('✅ Настройки сохранены и применены.', true);
+    load();
+  } catch (e) {
+    toast('❌ Ошибка сохранения: ' + e.message, false);
+  }
+}
+
+async function stopBot() {
+  if (!localAvailable) { toast('Бот не запущен.', false); return; }
+  if (!confirm('Остановить бота?')) return;
+  try {
+    await fetch(LOCAL + '/api/stop', { method: 'POST' });
+    toast('Бот остановлен.', true);
+  } catch (e) {
+    toast('Ошибка: ' + e.message, false);
+  }
 }
 
 async function load() {
@@ -101,8 +257,7 @@ async function load() {
   try {
     const resp = await fetch(DATA_URL, { cache: 'no-store' });
     if (!resp.ok) throw new Error('HTTP ' + resp.status);
-    const data = await resp.json();
-    render(data);
+    render(await resp.json());
   } catch (e) {
     el.innerHTML = '<div class="error-msg">Нет данных. Файл статистики ещё не создан ботом (data/stats.json в репозитории).<br>Запустите бота хотя бы раз с github_token.txt.</div>';
     document.getElementById('updated').textContent = 'Ошибка: ' + e.message;
@@ -123,14 +278,12 @@ function render(d) {
 
   let html = '';
 
-  // Сервер
   html += `<div class="card server-card">
     <div class="server-name">🌐 ${esc(srv.name || 'Сервер')}</div>
     <div class="mono">ID: ${esc(srv.id || '—')}</div>
     <div><a href="${esc(srv.invite || '#')}" target="_blank">${esc(srv.invite || '—')}</a></div>
   </div>`;
 
-  // Сводка
   html += `<div class="grid">
     <div class="card"><h3>Всего отправок</h3><div class="big">${totalSends}</div></div>
     <div class="card"><h3>Успешно</h3><div class="big ok-color">${totalOk}</div></div>
@@ -138,7 +291,6 @@ function render(d) {
     <div class="card"><h3>Аккаунты</h3><div class="big">${accounts.length}</div></div>
   </div>`;
 
-  // Каналы (темы)
   html += `<div class="section-title">📢 Темы (каналы), куда отправляются сообщения</div><div class="grid">`;
   for (const c of channels) {
     const ok = c.ok || 0, fail = c.fail || 0, total = ok + fail;
@@ -158,7 +310,6 @@ function render(d) {
   }
   html += '</div>';
 
-  // Аккаунты
   html += `<div class="section-title">👤 Discord-аккаунты</div><div class="grid">`;
   for (const a of accounts) {
     const ok = a.ok || 0, fail = a.fail || 0;
@@ -177,7 +328,6 @@ function render(d) {
   }
   html += '</div>';
 
-  // Журнал событий
   html += `<div class="section-title">📋 Журнал отправок (последние ${events.length})</div>
   <div class="card" style="overflow-x:auto">
   <table>
@@ -196,7 +346,12 @@ function render(d) {
   document.getElementById('content').innerHTML = html;
 }
 
-load();
+(async function init() {
+  await checkLocal();
+  await loadSettings();
+  load();
+})();
+setInterval(checkLocal, 15000);
 setInterval(load, 60000);
 </script>
 </body>
