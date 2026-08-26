@@ -1,0 +1,203 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>Up Bot — Панель управления</title>
+<style>
+  :root {
+    --bg: #0e1117;
+    --panel: #161b22;
+    --panel2: #1c2330;
+    --border: #2b3240;
+    --text: #e6edf3;
+    --muted: #8b949e;
+    --green: #2ea043;
+    --green-bg: rgba(46, 160, 67, .15);
+    --red: #f85149;
+    --red-bg: rgba(248, 81, 73, .15);
+    --blue: #4493f8;
+    --accent: #6e40c9;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; }
+  body {
+    background: var(--bg);
+    color: var(--text);
+    font-family: -apple-system, "Segoe UI", Roboto, Helvetica, Arial, sans-serif;
+    padding: 24px;
+  }
+  h1 { font-size: 22px; margin-bottom: 4px; }
+  .sub { color: var(--muted); font-size: 13px; margin-bottom: 20px; }
+  .topbar { display: flex; align-items: center; justify-content: space-between; gap: 12px; flex-wrap: wrap; }
+  .btn {
+    background: var(--panel2); color: var(--text); border: 1px solid var(--border);
+    border-radius: 8px; padding: 8px 14px; cursor: pointer; font-size: 13px;
+  }
+  .btn:hover { border-color: var(--blue); }
+  .grid { display: grid; grid-template-columns: repeat(auto-fill, minmax(240px, 1fr)); gap: 14px; margin-bottom: 24px; }
+  .card {
+    background: var(--panel); border: 1px solid var(--border);
+    border-radius: 12px; padding: 16px;
+  }
+  .card h3 { font-size: 14px; color: var(--muted); font-weight: 600; text-transform: uppercase; letter-spacing: .5px; margin-bottom: 10px; }
+  .big { font-size: 28px; font-weight: 700; }
+  .ok-color { color: var(--green); }
+  .fail-color { color: var(--red); }
+  .section-title { font-size: 16px; font-weight: 700; margin: 26px 0 12px; display: flex; align-items: center; gap: 8px; }
+  .server-card { display: flex; flex-direction: column; gap: 8px; margin-bottom: 24px; }
+  .server-name { font-size: 20px; font-weight: 700; }
+  .mono { font-family: Consolas, monospace; font-size: 12px; color: var(--muted); }
+  a { color: var(--blue); text-decoration: none; }
+  a:hover { text-decoration: underline; }
+  .progress { height: 8px; background: var(--panel2); border-radius: 99px; overflow: hidden; display: flex; margin-top: 8px; }
+  .progress .ok-bar { background: var(--green); }
+  .progress .fail-bar { background: var(--red); }
+  .stat-line { display: flex; justify-content: space-between; font-size: 13px; color: var(--muted); margin-top: 4px; }
+  .channel-name { font-size: 15px; font-weight: 600; }
+  .badge { display: inline-block; padding: 2px 8px; border-radius: 99px; font-size: 12px; font-weight: 600; }
+  .badge-ok { background: var(--green-bg); color: var(--green); }
+  .badge-fail { background: var(--red-bg); color: var(--red); }
+  .badge-active { background: var(--green-bg); color: var(--green); }
+  .badge-inactive { background: var(--red-bg); color: var(--red); }
+  table { width: 100%; border-collapse: collapse; font-size: 13px; }
+  th, td { text-align: left; padding: 8px 10px; border-bottom: 1px solid var(--border); }
+  th { color: var(--muted); font-weight: 600; }
+  .account-card { display: flex; flex-direction: column; gap: 6px; }
+  .avatar {
+    width: 36px; height: 36px; border-radius: 50%; background: var(--accent);
+    display: flex; align-items: center; justify-content: center; font-weight: 700;
+    color: #fff; font-size: 15px; flex-shrink: 0;
+  }
+  .acc-head { display: flex; align-items: center; gap: 10px; }
+  .error-msg {
+    background: var(--panel); border: 1px solid var(--border); border-radius: 12px;
+    padding: 24px; text-align: center; color: var(--muted);
+  }
+  .filters { display: flex; gap: 10px; flex-wrap: wrap; margin-bottom: 12px; }
+  .filters .btn.active { border-color: var(--blue); background: rgba(68, 147, 248, .12); }
+  @media (max-width: 600px) { body { padding: 12px; } }
+</style>
+</head>
+<body>
+  <div class="topbar">
+    <div>
+      <h1>⬆️ Up Bot — Панель управления</h1>
+      <div class="sub" id="updated">Загрузка данных...</div>
+    </div>
+    <button class="btn" onclick="load()">🔄 Обновить</button>
+  </div>
+
+  <div id="content"></div>
+
+<script>
+const DATA_URL = 'https://raw.githubusercontent.com/netpuzyaka/up/main/data/stats.json';
+
+function esc(s) {
+  return String(s ?? '').replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+}
+
+async function load() {
+  const el = document.getElementById('content');
+  try {
+    const resp = await fetch(DATA_URL, { cache: 'no-store' });
+    if (!resp.ok) throw new Error('HTTP ' + resp.status);
+    const data = await resp.json();
+    render(data);
+  } catch (e) {
+    el.innerHTML = '<div class="error-msg">Нет данных. Файл статистики ещё не создан ботом (data/stats.json в репозитории).<br>Запустите бота хотя бы раз с github_token.txt.</div>';
+    document.getElementById('updated').textContent = 'Ошибка: ' + e.message;
+  }
+}
+
+function render(d) {
+  const srv = d.server || {};
+  const channels = d.channels || [];
+  const accounts = d.accounts || [];
+  const events = (d.events || []).slice(0, 150);
+
+  const totalSends = channels.reduce((s, c) => s + (c.sends || 0), 0);
+  const totalOk = channels.reduce((s, c) => s + (c.ok || 0), 0);
+  const totalFail = channels.reduce((s, c) => s + (c.fail || 0), 0);
+
+  document.getElementById('updated').textContent = 'Обновлено: ' + (d.updatedAt || '—') + ' · автообновление каждые 60 сек';
+
+  let html = '';
+
+  // Сервер
+  html += `<div class="card server-card">
+    <div class="server-name">🌐 ${esc(srv.name || 'Сервер')}</div>
+    <div class="mono">ID: ${esc(srv.id || '—')}</div>
+    <div><a href="${esc(srv.invite || '#')}" target="_blank">${esc(srv.invite || '—')}</a></div>
+  </div>`;
+
+  // Сводка
+  html += `<div class="grid">
+    <div class="card"><h3>Всего отправок</h3><div class="big">${totalSends}</div></div>
+    <div class="card"><h3>Успешно</h3><div class="big ok-color">${totalOk}</div></div>
+    <div class="card"><h3>Неудачно</h3><div class="big fail-color">${totalFail}</div></div>
+    <div class="card"><h3>Аккаунты</h3><div class="big">${accounts.length}</div></div>
+  </div>`;
+
+  // Каналы (темы)
+  html += `<div class="section-title">📢 Темы (каналы), куда отправляются сообщения</div><div class="grid">`;
+  for (const c of channels) {
+    const ok = c.ok || 0, fail = c.fail || 0, total = ok + fail;
+    const pctOk = total ? Math.round(ok / total * 100) : 0;
+    html += `<div class="card">
+      <div class="channel-name"># ${esc(c.name || c.id)}</div>
+      <div class="mono">ID: ${esc(c.id)}</div>
+      <div class="progress">
+        <div class="ok-bar" style="width:${pctOk}%"></div>
+        <div class="fail-bar" style="width:${total ? 100 - pctOk : 0}%"></div>
+      </div>
+      <div class="stat-line"><span>✅ ${ok} успешно</span><span>❌ ${fail} ошибок</span></div>
+      <div class="stat-line"><span>Всего: ${total}</span>
+        <span class="badge ${(c.lastResult === 'ok') ? 'badge-ok' : 'badge-fail'}">${(c.lastResult === 'ok') ? 'последняя: успех' : (c.lastResult === 'fail' ? 'последняя: ошибка' : 'нет данных')}</span></div>
+      <div class="stat-line"><span>Последняя: ${esc(c.lastTime || '—')}</span></div>
+    </div>`;
+  }
+  html += '</div>';
+
+  // Аккаунты
+  html += `<div class="section-title">👤 Discord-аккаунты</div><div class="grid">`;
+  for (const a of accounts) {
+    const ok = a.ok || 0, fail = a.fail || 0;
+    html += `<div class="card">
+      <div class="acc-head">
+        <div class="avatar">${esc((a.username || '?').slice(0, 1).toUpperCase())}</div>
+        <div>
+          <div class="channel-name">${esc(a.username || '—')}</div>
+          <span class="badge ${a.status === 'active' ? 'badge-active' : 'badge-inactive'}">${a.status === 'active' ? 'активен' : 'неактивен'}</span>
+        </div>
+      </div>
+      <div class="stat-line"><span>Отправок: ${a.sends || 0}</span><span>✅ ${ok} / ❌ ${fail}</span></div>
+      <div class="stat-line"><span>Последний канал:</span><span># ${esc(a.lastChannel || '—')}</span></div>
+      <div class="stat-line"><span>Последняя отправка:</span><span>${esc(a.lastTime || '—')}</span></div>
+    </div>`;
+  }
+  html += '</div>';
+
+  // Журнал событий
+  html += `<div class="section-title">📋 Журнал отправок (последние ${events.length})</div>
+  <div class="card" style="overflow-x:auto">
+  <table>
+    <tr><th>Время</th><th>Аккаунт</th><th>Канал</th><th>Результат</th><th>Ошибка</th></tr>`;
+  for (const e of events) {
+    html += `<tr>
+      <td class="mono">${esc(e.time)}</td>
+      <td>${esc(e.account)}</td>
+      <td># ${esc(e.channel)}</td>
+      <td><span class="badge ${e.ok ? 'badge-ok' : 'badge-fail'}">${e.ok ? '✅ успех' : '❌ ошибка'}</span></td>
+      <td class="mono">${esc(e.error || '—')}</td>
+    </tr>`;
+  }
+  html += '</table></div>';
+
+  document.getElementById('content').innerHTML = html;
+}
+
+load();
+setInterval(load, 60000);
+</script>
+</body>
+</html>
